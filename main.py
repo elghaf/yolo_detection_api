@@ -88,7 +88,6 @@ def process_tracking_results(results):
     
     return json_results
 
-
 @app.post("/upload/video")
 async def upload_video(video: UploadFile = File(...)):
     # Ensure the directory exists, create it if it doesn't
@@ -104,20 +103,26 @@ async def upload_video(video: UploadFile = File(...)):
     # Perform object tracking on the uploaded video
     results = onnx_model(video_path, save=True)
     
+    # Process tracking results
     processed_results = []
-    for det in results[0].boxes:
-        cls_id = int(det.cls)  # Extract class ID
-        conf = float(det.conf)  # Extract confidence score
-        # track_id = int(det.id)  # Extract track ID
-        xyxy = det.xyxy[0].tolist()  # Extract bounding box coordinates
-        
-        # Add extracted information to the processed results
-        processed_results.append({
-            "class_id": cls_id,
-            "confidence": conf,
-            # "track_id": track_id,
-            "bounding_box": xyxy
-        })
+    for result in results:
+        # Check if track method outputs are available and then process each detection
+        if hasattr(result, 'boxes') and len(result.boxes):
+            tracked_detections = result.boxes  # Get the detections with tracking
+
+            for det in tracked_detections:
+                cls_id = int(det["cls"])  # Extract class ID
+                conf = float(det["conf"])  # Extract confidence score
+                # track_id = int(det["id"])  # Extract track ID
+                xyxy = det["xyxy"][0].tolist()  # Extract bounding box coordinates
+                
+                # Add extracted information to the processed results
+                processed_results.append({
+                    "class_id": cls_id,
+                    "confidence": conf,
+                    # "track_id": track_id,
+                    "bounding_box": xyxy
+                })
     
     # Return the tracking results as JSON
     return processed_results
