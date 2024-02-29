@@ -3,20 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>Video Upload</title>
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #1f1f1f; /* Dark Grey */
+            margin: 0;
+            padding: 40px;
+            color: #ddd; /* Light Grey */
+            display: flex;
+            justify-content: center; /* Center everything horizontally */
+            align-items: center; /* Center everything vertically */
+            height: 100vh; /* Full viewport height */
+        }
+
+        .container {
+            width: 80%;
+            max-width: 600px; /* Max width for the container */
+            background-color: #333; /* Dark Grey */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            font-weight: 600;
+            color: #4CAF50; /* Green */
+            text-align: center;
+        }
+
+        .upload-form {
+            text-align: center;
+        }
+
+        .upload-btn {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        .upload-btn:hover {
+            background-color: #45a049; /* Darker Green */
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Upload App</h1>
-    <ul>
-        <li><a href="/upload/image">Upload Image</a></li>
-        <li><a href="/upload/video">Upload Video</a></li>
-    </ul>
+    <div class="container">
+        <h2>Upload Video</h2>
 
-    <!-- Video Upload Form -->
-    <h2>Upload Video</h2>
-    <form action="/upload/video" method="post" enctype="multipart/form-data">
-        <input type="file" name="video" accept="video/*">
-        <button type="submit">Upload</button>
-    </form>
+        <form action="/upload/video" method="post" enctype="multipart/form-data" class="upload-form">
+            <input type="file" name="video" accept="video/*" required>
+            <br><br>
+            <button type="submit" class="upload-btn">Upload</button>
+        </form>
+    </div>
 </body>
 </html>

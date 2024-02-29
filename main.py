@@ -74,15 +74,15 @@ def process_tracking_results(results):
                 # Get the class name from model.names
                 class_name = result.names[cls_id]
 
-                # Create or update the entry for the object in unique_objects_info dictionary
-                if class_name not in json_result['unique_objects_info']:
-                    json_result['unique_objects_info'][class_name] = {'count': 0, 'max_width': 0, 'max_height': 0, 'depth': []}
+                # Create or update the entry for the object in json_result['names']
+                if class_name not in json_result['names']:
+                    json_result['names'][class_name] = {'count': 0, 'max_width': 0, 'max_height': 0, 'depth': []}
 
                 # Update the count, maximum width and height, and depth for the object
-                json_result['unique_objects_info'][class_name]['count'] += 1
-                json_result['unique_objects_info'][class_name]['max_width'] = max(json_result['unique_objects_info'][class_name]['max_width'], width)
-                json_result['unique_objects_info'][class_name]['max_height'] = max(json_result['unique_objects_info'][class_name]['max_height'], height)
-                json_result['unique_objects_info'][class_name]['depth'].append(depth)
+                json_result['names'][class_name]['count'] += 1
+                json_result['names'][class_name]['max_width'] = max(json_result['names'][class_name]['max_width'], width)
+                json_result['names'][class_name]['max_height'] = max(json_result['names'][class_name]['max_height'], height)
+                json_result['names'][class_name]['depth'].append(depth)
         
         json_results.append(json_result)
     
@@ -104,11 +104,24 @@ async def upload_video(video: UploadFile = File(...)):
     # Perform object tracking on the uploaded video
     results = onnx_model(video_path, save=True)
     
-    # Process tracking results
-    processed_results = process_tracking_results(results)
+    processed_results = []
+    for det in results[0].boxes:
+        cls_id = int(det.cls)  # Extract class ID
+        conf = float(det.conf)  # Extract confidence score
+        # track_id = int(det.id)  # Extract track ID
+        xyxy = det.xyxy[0].tolist()  # Extract bounding box coordinates
+        
+        # Add extracted information to the processed results
+        processed_results.append({
+            "class_id": cls_id,
+            "confidence": conf,
+            # "track_id": track_id,
+            "bounding_box": xyxy
+        })
     
     # Return the tracking results as JSON
-    return json.dumps(processed_results)
+    return processed_results
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
