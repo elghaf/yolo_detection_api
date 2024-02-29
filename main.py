@@ -10,7 +10,7 @@ from fastapi import Response
 import pathlib
 from ultralytics import YOLO
 import os
-
+import json
 # Set the environment variable
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -49,6 +49,44 @@ async def upload_image_form(request: Request):
     return templates.TemplateResponse("upload_image.html", {"request": request})
 
 
+def process_tracking_results(results):
+    json_results = []
+    for result in results:
+        json_result = result.__dict__
+
+        # Check if track method outputs are available and then process each detection
+        if hasattr(result, 'boxes') and len(result.boxes):
+            tracked_detections = result.boxes  # Get the detections with tracking
+
+            for det in tracked_detections:
+                cls_id = int(det.cls)  # Extract class ID
+                conf = float(det.conf)  # Extract confidence score
+                # track_id = int(det.id)  # Extract track ID
+                xyxy = det.xyxy[0].tolist()  # Extract bounding box coordinates
+
+                # Placeholder depth estimation using basic geometric principles
+                # Here, we assume the depth is inversely proportional to the area of the bounding box
+                # You can replace this with a more accurate depth estimation method if available
+                width = xyxy[2] - xyxy[0]
+                height = xyxy[3] - xyxy[1]
+                depth = 1000 / (width * height)  # Placeholder depth calculation
+
+                # Get the class name from model.names
+                class_name = result.names[cls_id]
+
+                # Create or update the entry for the object in unique_objects_info dictionary
+                if class_name not in json_result['unique_objects_info']:
+                    json_result['unique_objects_info'][class_name] = {'count': 0, 'max_width': 0, 'max_height': 0, 'depth': []}
+
+                # Update the count, maximum width and height, and depth for the object
+                json_result['unique_objects_info'][class_name]['count'] += 1
+                json_result['unique_objects_info'][class_name]['max_width'] = max(json_result['unique_objects_info'][class_name]['max_width'], width)
+                json_result['unique_objects_info'][class_name]['max_height'] = max(json_result['unique_objects_info'][class_name]['max_height'], height)
+                json_result['unique_objects_info'][class_name]['depth'].append(depth)
+        
+        json_results.append(json_result)
+    
+    return json_results
 
 
 @app.post("/upload/video")
@@ -66,8 +104,11 @@ async def upload_video(video: UploadFile = File(...)):
     # Perform object tracking on the uploaded video
     results = onnx_model(video_path, save=True)
     
-    # Optionally, you can return the tracking results as JSON
-    return results
+    # Process tracking results
+    processed_results = process_tracking_results(results)
+    
+    # Return the tracking results as JSON
+    return json.dumps(processed_results)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
