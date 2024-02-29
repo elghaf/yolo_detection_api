@@ -30,7 +30,7 @@ CHUNK_SIZE = 1024
 video_directory = pathlib.Path("static/video")
 
 
-model = YOLO("models/best_seg_75.onnx", device="cpu")
+model = YOLO("models/best_seg_75.onnx")
 
 
 @app.get("/", response_class=HTMLResponse)
