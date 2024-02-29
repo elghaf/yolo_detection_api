@@ -29,8 +29,15 @@ CHUNK_SIZE = 1024
 # Directory to save uploaded videos
 video_directory = pathlib.Path("static/video")
 
+# Load the YOLOv8 model
+model = YOLO('yolov8n.pt')
 
-model = YOLO("models/best_seg_75.onnx")
+# Export the model to ONNX format
+model.export(format='onnx')
+
+# Load the exported ONNX model
+onnx_model = YOLO('yolov8n.onnx')
+#model = YOLO("models/best_seg_75.onnx")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -57,7 +64,7 @@ async def upload_video(video: UploadFile = File(...)):
         buffer.write(await video.read())
     
     # Perform object tracking on the uploaded video
-    results = model.track(video_path, show=True, save=True)
+    results = onnx_model(video_path, save=True)
     
     # Optionally, you can return the tracking results as JSON
     return results
