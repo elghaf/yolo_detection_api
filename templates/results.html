@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Upload Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .video-container {
+            margin-bottom: 20px;
+        }
+        .json-results {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-x: auto;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .download-link {
+            display: block;
+            margin-top: 10px;
+            text-decoration: none;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Video Upload Result</h1>
+
+        <div class="video-container">
+            <h2>Video</h2>
+            <video controls width="auto" height="auto">
+                <source src="/uploaded_videos/out.mp4" type="video/avi">
+                Your browser does not support the video tag.
+            </video>
+            
+            
+        </div>
+
+        <div class="json-results">
+            <h2>Tracking Results (JSON)</h2>
+            <pre>{{ json_results }}</pre>
+            <a href="/uploaded_videos/{{video_name}}/" class="download-link">Download JSON Results</a>
+        </div>
+    </div>
+</body>
+
+</html>
