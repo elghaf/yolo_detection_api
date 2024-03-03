@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import JSONResponse
 from ultralytics import YOLO
 import aiofiles
 import os
@@ -9,8 +10,12 @@ from pathlib import Path
 import json
 from jinja2 import Environment, FileSystemLoader
 import uvicorn
-from fastapi.responses import JSONResponse
-
+# add the fuzzy
+from fuzzywuzzy import process
+from video_processing.video_frames_opt import extract_frames_and_detect_objects,lik, lik_prediction
+import pandas as pd
+import numpy as np
+import cv2
 # Create a JSON file with tracking results
 # Define the Jinja2 environment
 jinja_env = Environment(loader=FileSystemLoader("templates"))
@@ -45,6 +50,7 @@ async def read_root(request: Request):
 async def upload_image_form(request: Request):
     return templates.TemplateResponse("upload_image.html", {"request": request})
 
+
 @app.post("/upload/video", response_class=HTMLResponse)
 async def upload_video(video: UploadFile = File(...)):
     # Ensure the directory exists, create it if it doesn't
@@ -62,47 +68,25 @@ async def upload_video(video: UploadFile = File(...)):
                 break
             # Write the chunk to the file
             await buffer.write(chunk)
+    
+    results = extract_frames_and_detect_objects(str(video_path))
 
-    # Perform object tracking on the uploaded video
-    results = onnx_model.track(str(video_path), save=True)
-
-    # Process tracking results
-    processed_results = []
-    for result in results:
-        # Check if track method outputs are available and then process each detection
-        if hasattr(result, 'boxes') and len(result.boxes):
-            tracked_detections = result.boxes  # Get the detections with tracking
-
-            for det in tracked_detections:
-                cls_id = int(det.cls)  # Extract class ID
-                conf = float(det.conf)  # Extract confidence score
-                xyxy = det.xyxy[0].tolist()  # Extract bounding box coordinates
-
-                # Placeholder depth estimation using basic geometric principles
-                width = xyxy[2] - xyxy[0]
-                height = xyxy[3] - xyxy[1]
-                depth = 1000 / (width * height)  # Placeholder depth calculation
-
-                # Get the class name from model.names
-                class_name = result.names[cls_id]
-
-                # Add extracted information to the processed results
-                processed_results.append({
-                    "class_name": class_name,
-                    "confidence": conf,
-                    "bounding_box": xyxy,
-                    "width": width,
-                    "height": height,
-                })
+    ######################################################
+    json_date, tencounterd_ids = lik(results)
+    #####################################################
+    # Process the prediction
+    processed_results = lik_prediction(json_date)
+    ######################################################
     
     # Create a JSON file with tracking results
     json_results_path = video_directory / f"{video.filename}.json"
     open_path = str(json_results_path)
+
     with open(open_path, "w") as json_file:
-        json.dump(processed_results, json_file, indent=4)
+        json_file.write(processed_results)
 
     # Return the processed JSON data
-    return JSONResponse(content=processed_results)
+    return processed_results[0]
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
