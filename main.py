@@ -20,8 +20,6 @@ import cv2
 # Define the Jinja2 environment
 jinja_env = Environment(loader=FileSystemLoader("templates"))
 
-
-
 # Set the environment variable
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
